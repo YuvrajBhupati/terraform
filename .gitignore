@@ -1,0 +1,8 @@
+*.pem
+*.ppk
+*.tfstate
+*.tfstate.backup
+*.exe
+.terraform/*
+.git/*
+.terraform.lock.hcl
