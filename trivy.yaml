@@ -1,0 +1,14 @@
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+
+scanners:
+  - vuln
+  - secret
+  - misconfig
+  - license
+
+ignore-unfixed: false
+
+timeout: 10m
