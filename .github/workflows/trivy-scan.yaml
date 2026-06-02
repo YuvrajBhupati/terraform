@@ -41,6 +41,7 @@ jobs:
           trivy-config: trivy.yaml
           format: sarif
           output: trivy-results.sarif
+          exit-code: 1
 
       - name: Upload Trivy SARIF to GitHub Security
         if: always()
