@@ -1,6 +1,7 @@
 severity:
   - CRITICAL
   - HIGH
+  - MEDIUM
 
 scanners:
   - vuln
@@ -8,7 +9,7 @@ scanners:
   - misconfig
   - license
 
-ignore-unfixed: true
+ignore-unfixed: false
 
 exit-code: 1
 
