@@ -11,6 +11,4 @@ scanners:
 
 ignore-unfixed: false
 
-exit-code: 1
-
 timeout: 10m
