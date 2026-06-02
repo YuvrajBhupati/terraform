@@ -1,0 +1,15 @@
+severity:
+  - CRITICAL
+  - HIGH
+
+scanners:
+  - vuln
+  - secret
+  - misconfig
+  - license
+
+ignore-unfixed: true
+
+exit-code: 1
+
+timeout: 10m
