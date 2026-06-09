@@ -60,15 +60,19 @@ jobs:
             CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
             HIGH=$(jq "$DATA | map(select(.Severity==\"HIGH\")) | length" trivy-results.json)
     
+
             TOP_ISSUES=$(jq -r "$DATA
-              | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
-              | .[0:3]
-              | map(\"- ID: \(.ID // .VulnerabilityID // \"N/A\")\\n  Title: \(.Title)\\n  Description: \(.Description[:120])\")
-              | join(\"\\n\\n\")
+            | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
+            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Title:** \(.Title // .PkgName // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[:150]))\n  **Link:** \(.PrimaryURL // \"N/A\")\")
+            | join(\"\\n\\n\")
             " trivy-results.json)
+
+
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
             echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
             echo "high=$HIGH" >> $GITHUB_OUTPUT
+            echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
 
             echo "issues<<EOF" >> $GITHUB_OUTPUT
             echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
@@ -81,14 +85,18 @@ jobs:
         with:
           header: trivy-scan
           message: |
-              **Trivy Security Scan Result**
-            
-              Critical: ${{ steps.summary.outputs.critical }}
-              High: ${{ steps.summary.outputs.high }}
+            🔒 **Trivy Security Scan Result**
 
-              High or critical security issues detected. Please resolve them before merging this PR.
-            
-              Full report is available in workflow artifacts.
+            ❌ **Critical:** ${{ steps.summary.outputs.critical }}
+            ⚠️ **High:** ${{ steps.summary.outputs.high }}
+
+            📌 **Top Issues Found**
+            ${{ steps.summary.outputs.issues }}
+
+            🚨 High / Critical security issues detected. Please resolve them before merging this PR.
+
+            📦 **Full report:** [Open workflow run](${{ steps.summary.outputs.run_url }})
+            _Download the `trivy-report` artifact from the workflow run page._
 
         
       - name: Upload Trivy report
