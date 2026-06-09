@@ -46,30 +46,33 @@ jobs:
           trivy-config: trivy.yaml
           format: json
           output: trivy-results.json
-          exit-code: 1
-
       
       - name: Extract Trivy summary
         id: summary
         run: |
-          CRITICAL=$(jq '
-          [
+            DATA='[
               .Results[].Vulnerabilities[]?,
               .Results[].Misconfigurations[]?,
               .Results[].Secrets[]?,
               .Results[].Licenses[]?
-          ] | map(select(.Severity=="CRITICAL")) | length ' trivy-results.json)
+            ]'
 
-          HIGH=$(jq '
-          [
-              .Results[].Vulnerabilities[]?,
-              .Results[].Misconfigurations[]?,
-              .Results[].Secrets[]?,
-              .Results[].Licenses[]?
-          ] | map(select(.Severity=="CRITICAL")) | length ' trivy-results.json)
+            CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
+            HIGH=$(jq "$DATA | map(select(.Severity==\"HIGH\")) | length" trivy-results.json)
+    
+            TOP_ISSUES=$(jq -r "$DATA
+              | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
+              | .[0:3]
+              | map(\"- ID: \(.ID // .VulnerabilityID // \"N/A\")\\n  Title: \(.Title)\\n  Description: \(.Description[:120])\")
+              | join(\"\\n\\n\")
+            " trivy-results.json)
 
-          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
-          echo "high=$HIGH" >> $GITHUB_OUTPUT
+            echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "high=$HIGH" >> $GITHUB_OUTPUT
+
+            echo "issues<<EOF" >> $GITHUB_OUTPUT
+            echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
 
       
       - name: Comment PR with Trivy summary
@@ -78,14 +81,14 @@ jobs:
         with:
           header: trivy-scan
           message: |
-            🔒 **Trivy Security Scan Result**
+              **Trivy Security Scan Result**
             
               Critical: ${{ steps.summary.outputs.critical }}
               High: ${{ steps.summary.outputs.high }}
 
-            🚨 Please fix vulnerabilities before merging.
+              High or critical security issues detected. Please resolve them before merging this PR.
             
-            📦 Full report is available in workflow artifacts.
+              Full report is available in workflow artifacts.
 
         
       - name: Upload Trivy report
@@ -96,8 +99,8 @@ jobs:
 
       - name: Fail if vulnerabilities found
         run: |
-            if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || [ "${{ steps.summary.outputs.high }}" -gt 0 ]; then   # ✅ CHANGED
-              echo "❌ Failing due to HIGH/CRITICAL vulnerabilities"
+            if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || [ "${{ steps.summary.outputs.high }}" -gt 0 ]; then
+              echo "Failing due to HIGH/CRITICAL security issues"
               exit 1
             fi
 
