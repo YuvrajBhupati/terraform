@@ -52,8 +52,21 @@ jobs:
       - name: Extract Trivy summary
         id: summary
         run: |
-          CRITICAL=$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-results.json)
-          HIGH=$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-results.json)
+          CRITICAL=$(jq '
+          [
+              .Results[].Vulnerabilities[]?,
+              .Results[].Misconfigurations[]?,
+              .Results[].Secrets[]?,
+              .Results[].Licenses[]?
+          ] | map(select(.Severity=="CRITICAL")) | length ' trivy-results.json)
+
+          HIGH=$(jq '
+          [
+              .Results[].Vulnerabilities[]?,
+              .Results[].Misconfigurations[]?,
+              .Results[].Secrets[]?,
+              .Results[].Licenses[]?
+          ] | map(select(.Severity=="CRITICAL")) | length ' trivy-results.json)
 
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
