@@ -80,7 +80,6 @@ jobs:
 
       
       - name: Comment PR with Trivy summary
-        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: trivy-scan
@@ -96,7 +95,7 @@ jobs:
             🚨 High / Critical security issues detected. Please resolve them before merging this PR.
 
             📦 **Full report:** [Open workflow run](${{ steps.summary.outputs.run_url }})
-            _Download the `trivy-report` artifact from the workflow run page._
+            _Download the full trivy-report from the workflow run page._
 
         
       - name: Upload Trivy report
