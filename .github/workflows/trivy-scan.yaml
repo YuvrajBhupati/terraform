@@ -145,6 +145,7 @@ jobs:
           ALLOWED_LICENSES="MIT"
           DISALLOWED=$(jq -r "
             [.Results[].Licenses[]? 
+             | select(.License != null)
              | select(.License | test(\"$ALLOWED_LICENSES\") | not)] 
             | length
           " trivy-results.json)
