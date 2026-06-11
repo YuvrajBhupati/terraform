@@ -63,7 +63,12 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
-            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Package:** \(.PkgName // \"N/A\")\n  **Installed Version:** \(.InstalledVersion // \"N/A\")\n  **Fixed Version:** \(.FixedVersion // \"N/A\")\n  **Severity:** \(.Severity // \"N/A\")\n  **Title:** \(.Title // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\"))\n  **Link:** \(.PrimaryURL // \"N/A\")\")
+            | map(\"### 🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\n\
+            - **Title:** \(.Title // .Message // \"N/A\")\n\
+            - **Package:** \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\n\
+            - **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\"))\n\
+            - **Link:** \(.PrimaryURL // \"N/A\")\")
+            | join(\"\n\n\")
             " trivy-results.json)
 
 
