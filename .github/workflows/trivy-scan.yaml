@@ -66,8 +66,7 @@ jobs:
             \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
             \"Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
             \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
-            \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\" + \"\n\" +
-            \"Link: [" + (.PrimaryURL // "N/A") + "](" + (.PrimaryURL // "N/A") + ")"
+            \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\"
             )
             | join(\"\\n\\n\")
             " trivy-results.json)
@@ -84,6 +83,7 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
 
 
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
             echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
