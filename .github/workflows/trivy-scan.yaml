@@ -77,6 +77,17 @@ jobs:
             | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
             ' trivy-results.json)
 
+            DISALLOWED_LIST=$(jq -r '
+            .Results[].Packages[]?
+            | select(.Licenses != null)
+            | select((.Licenses | join(",")) | test("MIT") | not)
+            | "- ❌ \(.Name) → \(.Licenses | join(","))"
+            ' trivy-results.json)
+
+            echo "disallowed<<EOF" >> $GITHUB_OUTPUT
+            echo "$DISALLOWED_LIST" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
             
             echo "licenses<<EOF" >> $GITHUB_OUTPUT
             echo "$LICENSES" >> $GITHUB_OUTPUT
