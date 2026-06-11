@@ -90,6 +90,9 @@ jobs:
             | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
             " trivy-results.json)
 
+            DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "❌" || true)
+            echo "disallowed_count=$DISALLOWED_COUNT" >> $GITHUB_OUTPUT
+            
             echo "disallowed<<EOF" >> $GITHUB_OUTPUT
             echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -129,9 +132,8 @@ jobs:
               
               ${{ steps.summary.outputs.issues }}
 
-              ### 🚫 Non-compliant Licenses
-              ${{ steps.summary.outputs.disallowed || '✅ All licenses are compliant' }}
-
+              ### 🚫 Non-compliant Licenses (${{ steps.summary.outputs.disallowed_count }})
+              ${{ steps.summary.outputs.disallowed_count == '0' && '✅ All licenses are compliant' || steps.summary.outputs.disallowed }}
 
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
               `;
