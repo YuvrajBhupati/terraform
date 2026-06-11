@@ -61,20 +61,6 @@ jobs:
             MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
             UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
-            # TOP_ISSUES=$(jq -r "$DATA
-            #  | map(
-            #   \"🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\" + \"\\n\" +
-            #   \"Title: \(.Title // .Message // \"N/A\")\" + \"\\n\" +
-            #   \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\\n\" +
-            #   \"Description: \(((.Description // .Message // \"N/A\")
-            #   | gsub(\"[\\r\\n]+\"; \" \")
-            #   | gsub(\" +\"; \" \")
-            #   | .[:140]))\" + \"\\n\" +
-            #     \"Link: \(.PrimaryURL // \"N/A\")\"
-            # )
-            # | join(\"\\n\\n\")
-            # " trivy-results.json)
-
             TOP_ISSUES=$(jq -r "$DATA
             | map(
               \"### 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\n\" +
@@ -85,10 +71,10 @@ jobs:
             | join(\"\n\n---\n\n\")
             " trivy-results.json)
 
-            LICENSES=$(jq -r '
-            .Results[].Packages[]?
-            | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
-            ' trivy-results.json)
+            # LICENSES=$(jq -r '
+            # .Results[].Packages[]?
+            # | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
+            # ' trivy-results.json)
 
             ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
             
@@ -103,13 +89,12 @@ jobs:
             echo "disallowed_count=$DISALLOWED_COUNT" >> $GITHUB_OUTPUT
             
             echo "disallowed<<EOF" >> $GITHUB_OUTPUT
-            echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
+            #echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
+            echo "$DISALLOWED_LIST" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-
-            
-            echo "licenses<<EOF" >> $GITHUB_OUTPUT
-            echo "$LICENSES" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            # echo "licenses<<EOF" >> $GITHUB_OUTPUT
+            # echo "$LICENSES" >> $GITHUB_OUTPUT
+            # echo "EOF" >> $GITHUB_OUTPUT
 
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -121,7 +106,8 @@ jobs:
             echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
 
             echo "issues<<EOF" >> $GITHUB_OUTPUT
-            echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
+            #echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
+            echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Comment PR with Trivy
