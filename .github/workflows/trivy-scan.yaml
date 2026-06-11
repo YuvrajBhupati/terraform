@@ -134,6 +134,7 @@ jobs:
 
               ---
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
+              ---
               ${{ steps.summary.outputs.issues }}
               `;
 
