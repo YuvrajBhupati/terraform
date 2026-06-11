@@ -63,13 +63,17 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(
-            \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
-            \"Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
-            \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
-            \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\"
-            )
-            | join(\"\\n\\n\")
-            " trivy-results.json)
+              \"- 🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
+              \"  Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
+              \"  Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
+              \"  Description: \(((.Description // .Message // \"N/A\")
+              | gsub(\"[\\r\\n]+\"; \" \")
+              | gsub(\" +\"; \" \")
+              | .[:140]))\" + \"\n\" +
+              \"  Link: \(.PrimaryURL // \"N/A\")\"
+              )
+              | join(\"\\n\\n\")
+              " trivy-results.json)
 
 
             LICENSES=$(jq -r '
@@ -150,11 +154,6 @@ jobs:
               
               ${{ steps.summary.outputs.issues }}
 
-
-              ### 📦 Licenses
-              ${{ steps.summary.outputs.licenses }}
-
-              
               ### 🚫 Non-compliant Licenses
               ${{ steps.summary.outputs.disallowed }}
 
