@@ -61,17 +61,28 @@ jobs:
             MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
             UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
+            # TOP_ISSUES=$(jq -r "$DATA
+            # | map(\"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\\n\
+            # Title: \(.Title // .Message // \"N/A\")\\n\
+            # Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\\n\
+            # Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\\n\
+            # Link: \(.PrimaryURL // \"N/A\")\")
+            # | join(\"\\n\\n---\\n\\n\")
+            # " trivy-results.json)
+
             TOP_ISSUES=$(jq -r "$DATA
-            | map(\"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\\n\
-            Title: \(.Title // .Message // \"N/A\")\\n\
-            Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\\n\
-            Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\\n\
-            Link: \(.PrimaryURL // \"N/A\")\")
-            | join(\"\\n\\n---\\n\\n\")
+            | map(
+             \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\",
+             \"Title: \(.Title // .Message // \"N/A\")\",
+             \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\",
+             \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\",
+             \"Link: \(.PrimaryURL // \"N/A\")\",
+             \"---\"
+            )
+            | join(\"\\n\")
+            | gsub(\"\\n---\\n$\"; \"\")
             " trivy-results.json)
 
-
-            
             LICENSES=$(jq -r '
             .Results[].Packages[]?
             | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
