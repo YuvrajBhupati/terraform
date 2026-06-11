@@ -143,11 +143,11 @@ jobs:
       - name: Enforce license policy
         run: |
           ALLOWED_LICENSES="MIT"
-          DISALLOWED=$(jq -r '
+          DISALLOWED=$(jq -r "
             [.Results[].Licenses[]? 
              | select(.License | test(\"$ALLOWED_LICENSES\") | not)] 
             | length
-          ' trivy-results.json)
+          " trivy-results.json)
 
           if [ "$DISALLOWED" -gt 0 ]; then
             echo "❌ Found disallowed licenses (non-MIT)"
