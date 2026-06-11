@@ -105,22 +105,24 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            github.rest.issues.createComment({
+            const body = `**Trivy Security Scan Result**
+
+            **Critical:** ${{ steps.summary.outputs.critical }}
+            **High:** ${{ steps.summary.outputs.high }}
+
+            ${{ steps.summary.outputs.issues }}
+
+            ---
+
+            Full report: ${{ steps.summary.outputs.run_url }}`;
+
+            await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.issue.number,
-              body: `
-              **Trivy Security Scan Result**
-
-              **Critical:** ${{ steps.summary.outputs.critical }}
-              **High:** ${{ steps.summary.outputs.high }}
-
-              ${{ steps.summary.outputs.issues }}
-              
-              ---
-              
-              Full report: ${{ steps.summary.outputs.run_url }}
-              `
+              body: body
             });
+      
+
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v7
