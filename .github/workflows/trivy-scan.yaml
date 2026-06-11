@@ -1,13 +1,10 @@
-name: Trivy Secret Scan
+name: Trivy Secret Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
-  pull_request:
-
-permissions:
-  contents: read
 
 jobs:
   secret-scan:
@@ -17,31 +14,43 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Verify Secret Test File
+      - name: Verify Test File Exists
         run: |
-          echo "===== Files ====="
+          echo "===== Repository Files ====="
           find . -type f | sort
 
           echo ""
-          echo "===== Secret Files ====="
-          find . -name "*.env" -o -name "*secret*" || true
+          echo "===== Secret Test File ====="
+          find . -name "test-secret.env" -exec cat {} \; || true
 
-      - name: Run Trivy Secret Scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scanners: secret
-          format: json
-          output: trivy-secret.json
-
-      - name: Display Results
+      - name: Install Trivy
         run: |
-          echo "===== Secret Count ====="
-          jq '[.Results[].Secrets[]?] | length' trivy-secret.json
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh
+          trivy version
+
+      - name: Run Secret Scan
+        run: |
+          trivy fs . \
+            --scanners secret \
+            --debug \
+            --format json \
+            --output trivy-secret.json
+
+      - name: Print Full Report
+        run: |
+          echo "===== RAW REPORT ====="
+          cat trivy-secret.json
+
+      - name: Count Secret Findings
+        run: |
+          echo "===== SECRET COUNT ====="
+          jq '[.Results[]?.Secrets[]?] | length' trivy-secret.json
 
           echo ""
-          echo "===== Secret Findings ====="
-          jq '.Results[].Secrets[]?' trivy-secret.json || true
+          echo "===== SECRET DETAILS ====="
+          jq '.Results[]?.Secrets[]?' trivy-secret.json
 
       - name: Upload Report
         uses: actions/upload-artifact@v4
