@@ -143,6 +143,11 @@ jobs:
               ### 📦 Licenses
               ${{ steps.summary.outputs.licenses }}
 
+              
+              ### 🚫 Non-compliant Licenses
+              ${{ steps.summary.outputs.disallowed }}
+
+
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
               `;
 
