@@ -63,7 +63,7 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
-            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Title:** \(.Title // .PkgName // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[:150]))\n  **Link:** \(.PrimaryURL // \"N/A\")\")
+            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Title:** \(.Title // .PkgName // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\") )\n  **Link:** \(.PrimaryURL // \"N/A\")\")
             | join(\"\\n\\n\")
             " trivy-results.json)
 
