@@ -91,7 +91,6 @@ jobs:
             \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\" + \"\n\" +
             \"Link: \(.PrimaryURL // \"N/A\")\"
             )
-            | map(gsub("^ +"; ""))
             | join(\"\\n\\n---\\n\\n\")
             " trivy-results.json)
 
@@ -150,10 +149,7 @@ jobs:
             **Low:** ${{ steps.summary.outputs.low }}
             **Unknown:** ${{ steps.summary.outputs.unknown }}
 
-
             ${{ steps.summary.outputs.issues }}
-
-            ---
 
             Full report: ${{ steps.summary.outputs.run_url }}`;
 
