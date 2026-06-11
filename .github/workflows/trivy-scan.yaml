@@ -52,8 +52,7 @@ jobs:
             DATA='[
               .Results[].Vulnerabilities[]?,
               .Results[].Misconfigurations[]?,
-              .Results[].Secrets[]?,
-              #.Results[].Licenses[]?
+              .Results[].Secrets[]?
             ]'
 
             CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
