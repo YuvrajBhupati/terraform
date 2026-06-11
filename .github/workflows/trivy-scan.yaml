@@ -91,7 +91,7 @@ jobs:
             \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] ))\" + \"\n\" +
             \"Link: \(.PrimaryURL // \"N/A\")\"
             )
-            | join(\"\\n\\n---\\n\\n\")
+            | join(\"\\n\\n\")
             " trivy-results.json)
 
             LICENSES=$(jq -r '
