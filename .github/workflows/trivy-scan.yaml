@@ -72,7 +72,7 @@ jobs:
               | .[:140]))\" + \"\n\" +
               \"  Link: \(.PrimaryURL // \"N/A\")\"
               )
-              | join("\\n")
+              | join(\"\\n\")
               " trivy-results.json)
 
 
