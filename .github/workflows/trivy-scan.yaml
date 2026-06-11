@@ -3,12 +3,13 @@ name: Trivy Security Scan
 on:
   pull_request:
   push:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: "0 6 * * 1"
 
 permissions:
   contents: read
+  actions: read
   pull-requests: write
 
 env:
@@ -21,40 +22,35 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Cache Trivy DB
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.TRIVY_CACHE_DIR }}
-          key: trivy-db-${{ runner.os }}
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             trivy-db-${{ runner.os }}-
 
       - name: Run Trivy Scan (Vuln, Secret, Misconfig, License)
         uses: aquasecurity/trivy-action@v0.36.0
-        continue-on-error: true
         with:
-          version: v0.71.0
           scan-type: fs
-          scanners: vuln,secret,misconfig,license
           trivy-config: trivy.yaml
           format: json
           output: trivy-results.json
-      
+
       - name: Extract Trivy summary
         id: summary
         run: |
             DATA='[
-              .Results[].Vulnerabilities[]?,
-              .Results[].Misconfigurations[]?,
-              .Results[].Secrets[]?,
-              .Results[].Licenses[]?
+              .Results[]? | .Vulnerabilities[]?,
+              .Results[]? | .Misconfigurations[]?,
+              .Results[]? | .Secrets[]?,
+              .Results[]? | .Licenses[]?
             ]'
 
             CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
@@ -78,28 +74,45 @@ jobs:
             echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-      
+      # - name: Comment PR with Trivy summary
+      #   uses: marocchino/sticky-pull-request-comment@v3
+      #   with:
+      #     header: trivy-scan
+      #     message: |
+      #       **Trivy Security Scan Result**
+
+      #       **Critical:** ${{ steps.summary.outputs.critical }}
+      #       **High:** ${{ steps.summary.outputs.high }}
+
+      #       **Top Issues Found**
+      #       ${{ steps.summary.outputs.issues }}
+
+      #       High / Critical security issues detected. Please resolve them before merging this PR.
+
+      #       **Full report:** [Open workflow run](${{ steps.summary.outputs.run_url }})
+      #       _Download the full trivy-report from the workflow run page._
+
+
       - name: Comment PR with Trivy summary
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: actions/github-script@v9
         with:
-          header: trivy-scan
-          message: |
-            🔒 **Trivy Security Scan Result**
+          script: |
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `
+              **Trivy Security Scan Result**
 
-            ❌ **Critical:** ${{ steps.summary.outputs.critical }}
-            ⚠️ **High:** ${{ steps.summary.outputs.high }}
+              **Critical:** ${{ steps.summary.outputs.critical }}
+              **High:** ${{ steps.summary.outputs.high }}
 
-            📌 **Top Issues Found**
-            ${{ steps.summary.outputs.issues }}
+              ${{ steps.summary.outputs.issues }}
 
-            🚨 High / Critical security issues detected. Please resolve them before merging this PR.
+              Full report: ${{ steps.summary.outputs.run_url }}'
+            });
 
-            📦 **Full report:** [Open workflow run](${{ steps.summary.outputs.run_url }})
-            _Download the full trivy-report from the workflow run page._
-
-        
       - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-report
           path: trivy-results.json
