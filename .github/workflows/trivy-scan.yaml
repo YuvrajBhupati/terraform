@@ -2,58 +2,22 @@ name: Trivy Secret Test
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "**"
 
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Verify Test File Exists
-        run: |
-          echo "===== Repository Files ====="
-          find . -type f | sort
-
-          echo ""
-          echo "===== Secret Test File ====="
-          find . -name "test-secret.env" -exec cat {} \; || true
-
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh
-          trivy version
+      - uses: actions/checkout@v4
 
       - name: Run Secret Scan
-        run: |
-          trivy fs . \
-            --scanners secret \
-            --debug \
-            --format json \
-            --output trivy-secret.json
-
-      - name: Print Full Report
-        run: |
-          echo "===== RAW REPORT ====="
-          cat trivy-secret.json
-
-      - name: Count Secret Findings
-        run: |
-          echo "===== SECRET COUNT ====="
-          jq '[.Results[]?.Secrets[]?] | length' trivy-secret.json
-
-          echo ""
-          echo "===== SECRET DETAILS ====="
-          jq '.Results[]?.Secrets[]?' trivy-secret.json
-
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          name: trivy-secret-report
-          path: trivy-secret.json
+          scan-type: fs
+          scanners: secret
+          format: json
+          output: trivy-secret.json
+
+      - name: Print Report
+        run: |
+          cat trivy-secret.json
