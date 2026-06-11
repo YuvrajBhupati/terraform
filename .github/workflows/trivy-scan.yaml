@@ -63,7 +63,7 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(
-              \"- 🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
+              \"- 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
               \"  Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
               \"  Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
               \"  Description: \(((.Description // .Message // \"N/A\")
@@ -97,8 +97,6 @@ jobs:
             echo "$LICENSES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-
-            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
             echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
@@ -111,31 +109,6 @@ jobs:
             echo "issues<<EOF" >> $GITHUB_OUTPUT
             echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-
-      # - name: Comment PR with Trivy summary
-      #   uses: actions/github-script@v9
-      #   with:
-      #     script: |
-      #       const body = `
-      #       **Trivy Security Scan Result**
-
-      #       **Critical:** ${{ steps.summary.outputs.critical }}
-      #       **High:** ${{ steps.summary.outputs.high }}
-      #       **Medium:** ${{ steps.summary.outputs.medium }}
-      #       **Low:** ${{ steps.summary.outputs.low }}
-      #       **Unknown:** ${{ steps.summary.outputs.unknown }}
-
-      #       ${{ steps.summary.outputs.issues }}
-
-      #       Full report: ${{ steps.summary.outputs.run_url }}
-      #       `;
-
-      #       await github.rest.issues.createComment({
-      #         ...context.repo,
-      #         issue_number: context.issue.number,
-      #         body: body
-      #       });
-
 
       - name: Comment PR with Trivy
         uses: actions/github-script@v9
@@ -155,7 +128,7 @@ jobs:
               ${{ steps.summary.outputs.issues }}
 
               ### 🚫 Non-compliant Licenses
-              ${{ steps.summary.outputs.disallowed }}
+              ${{ steps.summary.outputs.disallowed || '✅ All licenses are compliant' }}
 
 
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
@@ -176,7 +149,7 @@ jobs:
 
       - name: Enforce license policy
         run: |
-          ALLOWED_LICENSES="MIT"
+          ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
 
           DISALLOWED=$(jq -r "
             [
@@ -190,7 +163,7 @@ jobs:
           echo "Disallowed count: $DISALLOWED"
 
           if [ "$DISALLOWED" -gt 0 ]; then
-            echo "❌ Found disallowed licenses (non-MIT)"
+            echo "❌ Found disallowed licenses (not in allowed list)"
             exit 1
           fi
 
