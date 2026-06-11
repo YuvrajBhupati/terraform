@@ -88,11 +88,12 @@ jobs:
             \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
             \"Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
             \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
-            \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\"
+            \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\" + \"\n\" +
             \"Link: \(.PrimaryURL // \"N/A\")\"
             )
             | join(\"\\n\\n\")
             " trivy-results.json)
+
 
             LICENSES=$(jq -r '
             .Results[].Packages[]?
@@ -118,25 +119,6 @@ jobs:
             echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-      # - name: Comment PR with Trivy summary
-      #   uses: marocchino/sticky-pull-request-comment@v3
-      #   with:
-      #     header: trivy-scan
-      #     message: |
-      #       **Trivy Security Scan Result**
-
-      #       **Critical:** ${{ steps.summary.outputs.critical }}
-      #       **High:** ${{ steps.summary.outputs.high }}
-
-      #       **Top Issues Found**
-      #       ${{ steps.summary.outputs.issues }}
-
-      #       High / Critical security issues detected. Please resolve them before merging this PR.
-
-      #       **Full report:** [Open workflow run](${{ steps.summary.outputs.run_url }})
-      #       _Download the full trivy-report from the workflow run page._
-
-
       - name: Comment PR with Trivy summary
         uses: actions/github-script@v9
         with:
@@ -160,9 +142,6 @@ jobs:
               issue_number: context.issue.number,
               body: body
             });
-
-      
-
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v7
