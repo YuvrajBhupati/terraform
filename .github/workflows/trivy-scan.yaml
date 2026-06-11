@@ -77,12 +77,12 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(
-              \"- 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\n\" +
-              \"  - Title: \(.Title // .Message // \"N/A\")\n\" +
-              \"  - Package: \(.PkgName // \"N/A\")\n\" +
-              \"  - Link: \(.PrimaryURL // \"N/A\")\"
+              \"### 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\n\" +
+              \"**Title:** \(.Title // .Message // \"N/A\")\n\" +
+              \"**Package:** \(.PkgName // \"N/A\")\n\" +
+              \"**Link:** \(.PrimaryURL // \"N/A\")\"
             )
-            | join(\"\n\n\")
+            | join(\"\n\n---\n\n\")
             " trivy-results.json)
 
             LICENSES=$(jq -r '
