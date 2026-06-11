@@ -53,7 +53,7 @@ jobs:
               .Results[].Vulnerabilities[]?,
               .Results[].Misconfigurations[]?,
               .Results[].Secrets[]?,
-              .Results[].Licenses[]?
+              #.Results[].Licenses[]?
             ]'
 
             CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
@@ -73,6 +73,17 @@ jobs:
             - **Link:** \(.PrimaryURL // \"N/A\")\")
             | join(\"\\n\\n\") | sub(\"\\n+$\"; \"\")
             " trivy-results.json)
+
+            
+            LICENSES=$(jq -r '
+            .Results[].Packages[]?
+            | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
+            ' trivy-results.json)
+
+            
+            echo "licenses<<EOF" >> $GITHUB_OUTPUT
+            echo "$LICENSES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
 
 
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
