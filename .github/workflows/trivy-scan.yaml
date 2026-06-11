@@ -61,28 +61,6 @@ jobs:
             MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
             UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
-            # TOP_ISSUES=$(jq -r "$DATA
-            # | map(\"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\\n\
-            # Title: \(.Title // .Message // \"N/A\")\\n\
-            # Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\\n\
-            # Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\"
-            # Link: \(.PrimaryURL // \"N/A\")\")
-            # | join(\"\\n\\n---\\n\\n\")
-            # " trivy-results.json)
-
-            # TOP_ISSUES=$(jq -r "$DATA
-            # | map(
-            #  \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\",
-            #  \"Title: \(.Title // .Message // \"N/A\")\",
-            #  \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\",
-            #  \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\",
-            #  \"Link: \(.PrimaryURL // \"N/A\")\",
-            #  \"---\"
-            # )
-            # | join(\"\\n\")
-            # | gsub(\"\\n---\\n$\"; \"\")
-            # " trivy-results.json)
-
             TOP_ISSUES=$(jq -r "$DATA
             | map(
             \"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
@@ -119,29 +97,65 @@ jobs:
             echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Comment PR with Trivy summary
+      # - name: Comment PR with Trivy summary
+      #   uses: actions/github-script@v9
+      #   with:
+      #     script: |
+      #       const body = `
+      #       **Trivy Security Scan Result**
+
+      #       **Critical:** ${{ steps.summary.outputs.critical }}
+      #       **High:** ${{ steps.summary.outputs.high }}
+      #       **Medium:** ${{ steps.summary.outputs.medium }}
+      #       **Low:** ${{ steps.summary.outputs.low }}
+      #       **Unknown:** ${{ steps.summary.outputs.unknown }}
+
+      #       ${{ steps.summary.outputs.issues }}
+
+      #       Full report: ${{ steps.summary.outputs.run_url }}
+      #       `;
+
+      #       await github.rest.issues.createComment({
+      #         ...context.repo,
+      #         issue_number: context.issue.number,
+      #         body: body
+      #       });
+
+
+      - name: Comment PR with Trivy
         uses: actions/github-script@v9
         with:
-          script: |
-            const body = `
-            **Trivy Security Scan Result**
+            script: |  
+              const body = `
+              ### 🔒 Trivy Security Scan Result
 
-            **Critical:** ${{ steps.summary.outputs.critical }}
-            **High:** ${{ steps.summary.outputs.high }}
-            **Medium:** ${{ steps.summary.outputs.medium }}
-            **Low:** ${{ steps.summary.outputs.low }}
-            **Unknown:** ${{ steps.summary.outputs.unknown }}
+              **Critical:** ${{ steps.summary.outputs.critical }}  
+              **High:** ${{ steps.summary.outputs.high }}  
+              **Medium:** ${{ steps.summary.outputs.medium }}  
+              **Low:** ${{ steps.summary.outputs.low }}  
+              **Unknown:** ${{ steps.summary.outputs.unknown }}
 
-            ${{ steps.summary.outputs.issues }}
+              ---
 
-            Full report: ${{ steps.summary.outputs.run_url }}
-            `;
+              ### 📌 Top Issues
+              \`\`\`
+              ${{ steps.summary.outputs.issues }}
+              \`\`\`
 
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
+              ### 📦 Licenses
+              \`\`\`
+              ${{ steps.summary.outputs.licenses }}
+              \`\`\`
+
+              🔗 Full report: ${{ steps.summary.outputs.run_url }}
+              `;
+
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v7
