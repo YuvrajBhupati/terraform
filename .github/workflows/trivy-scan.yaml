@@ -108,7 +108,7 @@ jobs:
 
               ${{ steps.summary.outputs.issues }}
 
-              Full report: ${{ steps.summary.outputs.run_url }}'
+              Full report: ${{ steps.summary.outputs.run_url }}`
             });
 
       - name: Upload Trivy report
