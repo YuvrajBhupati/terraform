@@ -39,7 +39,6 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
-          trivy-config: trivy.yaml
           scanners: vuln,secret,misconfig,license
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           ignore-unfixed: true
