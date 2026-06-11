@@ -129,13 +129,12 @@ jobs:
               **Unknown:** ${{ steps.summary.outputs.unknown }}
 
               ---
-              
-              ${{ steps.summary.outputs.issues }}
-
               ### 🚫 Non-compliant Licenses (${{ steps.summary.outputs.disallowed_count }})
               ${{ steps.summary.outputs.disallowed_count == '0' && '✅ All licenses are compliant' || steps.summary.outputs.disallowed }}
 
+              ---
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
+              ${{ steps.summary.outputs.issues }}
               `;
 
               await github.rest.issues.createComment({
