@@ -61,6 +61,7 @@ jobs:
             HIGH=$(jq "$DATA | map(select(.Severity==\"HIGH\")) | length" trivy-results.json)            
             LOW=$(jq "$DATA | map(select(.Severity==\"LOW\")) | length" trivy-results.json)
             MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
+            UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
     
 
@@ -81,6 +82,7 @@ jobs:
             echo "high=$HIGH" >> $GITHUB_OUTPUT
             echo "low=$LOW" >> $GITHUB_OUTPUT
             echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+            echo "unknown=$UNKNOWN" >> $GITHUB_OUTPUT
             echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
 
             echo "issues<<EOF" >> $GITHUB_OUTPUT
@@ -116,6 +118,7 @@ jobs:
             **High:** ${{ steps.summary.outputs.high }}
             **Medium:** ${{ steps.summary.outputs.medium }}
             **Low:** ${{ steps.summary.outputs.low }}
+            **Unknown:** ${{ steps.summary.outputs.unknown }}
 
 
             ${{ steps.summary.outputs.issues }}
