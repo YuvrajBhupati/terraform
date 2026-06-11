@@ -40,6 +40,10 @@ jobs:
         with:
           scan-type: fs
           trivy-config: trivy.yaml
+          scanners: vuln,secret,misconfig,license
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          timeout: 10m
           format: json
           output: trivy-results.json
 
