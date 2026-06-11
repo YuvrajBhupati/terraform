@@ -141,23 +141,25 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const body = `**Trivy Security Scan Result**
+            const body = `
+**Trivy Security Scan Result**
+      
+**Critical:** ${{ steps.summary.outputs.critical }}
+**High:** ${{ steps.summary.outputs.high }}
+**Medium:** ${{ steps.summary.outputs.medium }}
+**Low:** ${{ steps.summary.outputs.low }}
+**Unknown:** ${{ steps.summary.outputs.unknown }}
 
-            **Critical:** ${{ steps.summary.outputs.critical }}
-            **High:** ${{ steps.summary.outputs.high }}
-            **Medium:** ${{ steps.summary.outputs.medium }}
-            **Low:** ${{ steps.summary.outputs.low }}
-            **Unknown:** ${{ steps.summary.outputs.unknown }}
+${{ steps.summary.outputs.issues }}
 
-            ${{ steps.summary.outputs.issues }}
+Full report: ${{ steps.summary.outputs.run_url }}
+`;
 
-            Full report: ${{ steps.summary.outputs.run_url }}`;
-
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
+  await github.rest.issues.createComment({
+    ...context.repo,
+    issue_number: context.issue.number,
+    body: body
+    });
       
 
 
