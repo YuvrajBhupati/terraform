@@ -62,18 +62,18 @@ jobs:
             UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
             TOP_ISSUES=$(jq -r "$DATA
-            | map(
-              \"- 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\" + \"\n\" +
-              \"  Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
-              \"  Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
-              \"  Description: \(((.Description // .Message // \"N/A\")
+             | map(
+              \"🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\" + \"\\n\" +
+              \"Title: \(.Title // .Message // \"N/A\")\" + \"\\n\" +
+              \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\\n\" +
+              \"Description: \(((.Description // .Message // \"N/A\")
               | gsub(\"[\\r\\n]+\"; \" \")
               | gsub(\" +\"; \" \")
-              | .[:140]))\" + \"\n\" +
-              \"  Link: \(.PrimaryURL // \"N/A\")\"
-              )
-              | join("\\n\\n---\\n\\n")
-              " trivy-results.json)
+              | .[:140]))\" + \"\\n\" +
+                \"Link: \(.PrimaryURL // \"N/A\")\"
+            )
+            | join(\"\\n\\n\")
+            " trivy-results.json)
 
 
             LICENSES=$(jq -r '
