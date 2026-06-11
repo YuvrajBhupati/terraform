@@ -65,7 +65,7 @@ jobs:
             # | map(\"🔒 \(.Severity // \"N/A\") | \(.ID // .VulnerabilityID // \"N/A\")\\n\
             # Title: \(.Title // .Message // \"N/A\")\\n\
             # Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\\n\
-            # Description: \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | .[0:140] + \"...\" ))\\n\
+            # Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\"
             # Link: \(.PrimaryURL // \"N/A\")\")
             # | join(\"\\n\\n---\\n\\n\")
             # " trivy-results.json)
