@@ -2,6 +2,9 @@ name: Trivy Secret Test
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test-sec
 
 jobs:
   secret-scan:
