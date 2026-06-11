@@ -115,7 +115,7 @@ jobs:
             echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
 
             echo "issues<<EOF" >> $GITHUB_OUTPUT
-            echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
+            echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
       # - name: Comment PR with Trivy summary
