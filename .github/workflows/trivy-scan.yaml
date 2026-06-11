@@ -83,15 +83,15 @@ jobs:
 
             ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
             
-            DISALLOWED_LIST=$(jq -r '
+            DISALLOWED_LIST=$(jq -r "
             .Results[].Packages[]?
             | select(.Licenses != null)
-            | select((.Licenses | join(",")) | test("$ALLOWED_LICENSES") | not)
-            | "- ❌ \(.Name) → \(.Licenses | join(","))"
-            ' trivy-results.json)
+            | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
+            | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
+            " trivy-results.json)
 
             echo "disallowed<<EOF" >> $GITHUB_OUTPUT
-            echo "$DISALLOWED_LIST" >> $GITHUB_OUTPUT
+            echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
             
