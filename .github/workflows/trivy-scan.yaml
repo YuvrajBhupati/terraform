@@ -63,8 +63,7 @@ jobs:
 
             TOP_ISSUES=$(jq -r "$DATA
             | map(select(.Severity==\"CRITICAL\" or .Severity==\"HIGH\"))
-            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Title:** \(.Title // .PkgName // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\") )\n  **Link:** \(.PrimaryURL // \"N/A\")\")
-            | join(\"\\n\\n\")
+            | map(\"- **ID:** \(.ID // .VulnerabilityID // \"N/A\")\n  **Package:** \(.PkgName // \"N/A\")\n  **Installed Version:** \(.InstalledVersion // \"N/A\")\n  **Fixed Version:** \(.FixedVersion // \"N/A\")\n  **Severity:** \(.Severity // \"N/A\")\n  **Title:** \(.Title // .Message // \"N/A\")\n  **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\"))\n  **Link:** \(.PrimaryURL // \"N/A\")\")
             " trivy-results.json)
 
 
@@ -123,10 +122,17 @@ jobs:
 
       - name: Fail if vulnerabilities found
         run: |
-            if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || [ "${{ steps.summary.outputs.high }}" -gt 0 ]; then
-              echo "Failing due to HIGH/CRITICAL security issues"
-              exit 1
-            fi
+          LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
+          if [ "$LICENSE_COUNT" -gt 0 ]; then
+            echo "License compliance issues found"
+            exit 1
+          fi
+
+          if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || [ "${{ steps.summary.outputs.high }}" -gt 0 ]; then
+            echo "Failing due to HIGH/CRITICAL vulnerabilities"
+            exit 1
+          fi
+
 
       # - name: Upload Trivy SARIF to GitHub Security
       #   if: always()
