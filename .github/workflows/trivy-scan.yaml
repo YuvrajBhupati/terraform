@@ -68,7 +68,7 @@ jobs:
             - **Package:** \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\n\
             - **Description:** \(((.Description // .Message // \"N/A\") | gsub(\"\\n\"; \" \") | split(\".\")[0] + \".\"))\n\
             - **Link:** \(.PrimaryURL // \"N/A\")\")
-            | join(\"\n\n\")
+            | join("\n\n") | sub("\n+$"; "")
             " trivy-results.json)
 
 
