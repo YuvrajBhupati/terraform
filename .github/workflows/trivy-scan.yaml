@@ -67,7 +67,7 @@ jobs:
             \"Title: \(.Title // .Message // \"N/A\")\" + \"\n\" +
             \"Package: \(.PkgName // \"N/A\") | Installed: \(.InstalledVersion // \"N/A\") | Fixed: \(.FixedVersion // \"N/A\")\" + \"\n\" +
             \"Description: \(((.Description // .Message // \"N/A\") | gsub(\"[\\r\\n]+\"; \" \") | gsub(\" +\"; \" \") | .[:140] ))\" + \"\n\" +
-            \"Link: \(.PrimaryURL // \"N/A\")\"
+            \"Link: [" + (.PrimaryURL // "N/A") + "](" + (.PrimaryURL // "N/A") + ")"
             )
             | join(\"\\n\\n\")
             " trivy-results.json)
@@ -136,16 +136,12 @@ jobs:
               **Unknown:** ${{ steps.summary.outputs.unknown }}
 
               ---
-
-              ### 📌 Top Issues
-              \`\`\`
+              
               ${{ steps.summary.outputs.issues }}
-              \`\`\`
+
 
               ### 📦 Licenses
-              \`\`\`
               ${{ steps.summary.outputs.licenses }}
-              \`\`\`
 
               🔗 Full report: ${{ steps.summary.outputs.run_url }}
               `;
