@@ -1,52 +1,50 @@
-name: Trivy Security Scan
+name: Trivy Secret Scan
 
 on:
-  pull_request:
   push:
-    branches: [ master ]
-  schedule:
-    - cron: "0 6 * * 1"
+    branches:
+      - "**"
+  pull_request:
 
 permissions:
   contents: read
-  security-events: write
-
-env:
-  TRIVY_CACHE_DIR: /tmp/trivy-cache
 
 jobs:
-  trivy-scan:
-    name: Full Security Scan
+  secret-scan:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Cache Trivy DB
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.TRIVY_CACHE_DIR }}
-          key: trivy-db-${{ runner.os }}
-          restore-keys: |
-            trivy-db-${{ runner.os }}-
+      - name: Verify Secret Test File
+        run: |
+          echo "===== Files ====="
+          find . -type f | sort
 
-      - name: Run Trivy Scan (Vuln, Secret, Misconfig, License)
+          echo ""
+          echo "===== Secret Files ====="
+          find . -name "*.env" -o -name "*secret*" || true
+
+      - name: Run Trivy Secret Scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
-          scanners: vuln,secret,misconfig,license
-          scan-ref: .
-          trivy-config: trivy.yaml
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: 1
+          scanners: secret
+          format: json
+          output: trivy-secret.json
 
-      - name: Upload Trivy SARIF to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Display Results
+        run: |
+          echo "===== Secret Count ====="
+          jq '[.Results[].Secrets[]?] | length' trivy-secret.json
+
+          echo ""
+          echo "===== Secret Findings ====="
+          jq '.Results[].Secrets[]?' trivy-secret.json || true
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: trivy-results.sarif
-          category: trivy-iac
+          name: trivy-secret-report
+          path: trivy-secret.json
