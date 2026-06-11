@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
   pull-requests: write
 
 env:
@@ -141,13 +140,28 @@ jobs:
           name: trivy-report
           path: trivy-results.json
 
-      - name: Fail if vulnerabilities found
+      - name: Enforce license policy
         run: |
-          LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
-          if [ "$LICENSE_COUNT" -gt 0 ]; then
-            echo "License compliance issues found"
+          ALLOWED_LICENSES="MIT"
+          DISALLOWED=$(jq -r '
+            [.Results[].Licenses[]? 
+             | select(.License | test(\"$ALLOWED_LICENSES\") | not)] 
+            | length
+          ' trivy-results.json)
+
+          if [ "$DISALLOWED" -gt 0 ]; then
+            echo "❌ Found disallowed licenses (non-MIT)"
             exit 1
           fi
+
+
+      - name: Fail if vulnerabilities found
+        run: |
+          # LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
+          # if [ "$LICENSE_COUNT" -gt 0 ]; then
+          #   echo "License compliance issues found"
+          #   exit 1
+          # fi
 
           if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
@@ -157,10 +171,3 @@ jobs:
             exit 1
           fi
 
-
-      # - name: Upload Trivy SARIF to GitHub Security
-      #   if: always()
-      #   uses: github/codeql-action/upload-sarif@v4
-      #   with:
-      #     sarif_file: trivy-results.sarif
-      #     category: trivy-iac
