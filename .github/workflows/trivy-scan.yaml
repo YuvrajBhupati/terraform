@@ -21,6 +21,14 @@ jobs:
           format: json
           output: trivy-secret.json
 
+      - name: Verify files
+        run: |
+          pwd
+          ls -la
+          find . -type f | sort
+          echo "==== test-secret.env ===="
+          cat test-secret.env || echo "FILE NOT FOUND"
+
       - name: Print Report
         run: |
           cat trivy-secret.json
