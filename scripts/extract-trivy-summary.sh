@@ -17,16 +17,21 @@ MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" "$TRIVY_FILE")
 LOW=$(jq "$DATA | map(select(.Severity==\"LOW\")) | length" "$TRIVY_FILE")
 UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" "$TRIVY_FILE")
 
-TOP_ISSUES=$(jq -r "
-$DATA
+TOP_ISSUES=$(jq -r '
+[
+  .Results[].Vulnerabilities[]?,
+  .Results[].Misconfigurations[]?,
+  .Results[].Secrets[]?
+]
 | map(
-    \"### 🔒 \(.Severity // \\\"N/A\\\") - \(.ID // .VulnerabilityID // \\\"N/A\\\")\n\" +
-    \"**Title:** \(.Title // .Message // \\\"N/A\\\")\n\" +
-    \"**Package:** \(.PkgName // \\\"N/A\\\") | **Installed:** \(.InstalledVersion // \\\"N/A\\\") | **Fixed:** \(.FixedVersion // \\\"N/A\\\")\n\" +
-    \"**Link:** \(.PrimaryURL // \\\"N/A\\\")\"
-  )
-| join(\"\n\n---\n\n\")
-" "$TRIVY_FILE")
+    "### 🔒 " + (.Severity // "N/A") + " - " +
+    (.ID // .VulnerabilityID // "N/A") + "\n" +
+    "**Title:** " + (.Title // .Message // "N/A") + "\n" +
+    "**Package:** " + (.PkgName // "N/A") + "\n" +
+    "**Link:** " + (.PrimaryURL // "N/A")
+)
+| join("\n\n---\n\n")
+' "$TRIVY_FILE")
 
 ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
 
