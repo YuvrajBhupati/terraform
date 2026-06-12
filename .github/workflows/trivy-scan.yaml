@@ -42,10 +42,6 @@ jobs:
           trivy-config: trivy.yaml
           format: json
           output: trivy-results.json
-
-      - name: Debug script
-        run: |
-          sed -n '1,200p' scripts/extract-trivy-summary.sh
     
       - name: Extract Trivy summary
         id: summary
