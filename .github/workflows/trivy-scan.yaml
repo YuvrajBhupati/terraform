@@ -39,10 +39,7 @@ jobs:
         with:
           version: v0.71.0
           scan-type: fs
-          format: json
-          output: trivy-results.json
           trivy-config: trivy.yaml
-          debug: true
           # scan-type: fs
           # scanners: vuln,secret,misconfig,license
           # severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
@@ -51,25 +48,6 @@ jobs:
           # format: json
           # output: trivy-results.json
 
-      - name: Verify config
-        run: |
-          echo "===== trivy.yaml ====="
-          cat trivy.yaml
-
-      - name: Debug Trivy report
-        run: |
-          echo "===== FILE EXISTS ====="
-          ls -l trivy-results.json
-
-          echo "===== REPORT ====="
-          cat trivy-results.json
-
-          echo "===== TOP LEVEL KEYS ====="
-          jq 'keys' trivy-results.json
-
-      - name: Show Trivy logs
-        run: |
-          cat trivy-results.json | jq .
 
       - name: Extract Trivy summary
         id: summary
