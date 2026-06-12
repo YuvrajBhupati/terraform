@@ -1,0 +1,24 @@
+scan:
+  type: fs
+
+scanners:
+  - vuln
+  - secret
+  - misconfig
+  - license
+
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+ignore-unfixed: true
+
+timeout: 10m
+
+format: json
+
+output: trivy-results.json
+
+ignorefile: .trivyignore
