@@ -66,12 +66,12 @@ jobs:
           name: trivy-report
           path: trivy-results.json
 
-      - name: Enforce license policy
+      - name: Check license compliance
         run: |
             chmod +x scripts/check-license-policy.sh
             ./scripts/check-license-policy.sh trivy-results.json
 
-      - name: Fail if vulnerabilities found
+      - name: Check for vulnerabilities
         run: |
           if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
