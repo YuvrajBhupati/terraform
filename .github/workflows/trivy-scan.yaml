@@ -68,33 +68,11 @@ jobs:
 
       - name: Enforce license policy
         run: |
-          ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
-
-          DISALLOWED=$(jq -r "
-            [
-              .Results[].Packages[]?
-               | select(.Licenses != null)
-              | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
-            ]
-            | length
-            " trivy-results.json)
-
-          echo "Disallowed count: $DISALLOWED"
-
-          if [ "$DISALLOWED" -gt 0 ]; then
-            echo "❌ Found disallowed licenses (not in allowed list)"
-            exit 1
-          fi
-
+            chmod +x scripts/check-license-policy.sh
+            ./scripts/check-license-policy.sh trivy-results.json
 
       - name: Fail if vulnerabilities found
         run: |
-          # LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
-          # if [ "$LICENSE_COUNT" -gt 0 ]; then
-          #   echo "License compliance issues found"
-          #   exit 1
-          # fi
-
           if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.medium }}" -gt 0 ] || \
