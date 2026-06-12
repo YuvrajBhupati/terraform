@@ -1,0 +1,11 @@
+# yarn lockfile v1
+
+lodash@4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz"
+  integrity sha512-v2kDEUAkAjop6J8pH6+K3miPqG9lG8Q7B5Y4zHT61l9e0QZw6z6YH2pK6Nb3c7qM2z9KzA+1+5e3W7y4z2c9Qg==
+
+left-pad@1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/left-pad/-/left-pad-1.3.0.tgz"
+  integrity sha512-abc123
