@@ -1,8 +1,3 @@
-# trivy.yaml
-
-scan:
-  type: fs
-
 scanners:
   - vuln
   - secret
@@ -18,9 +13,5 @@ severity:
 ignore-unfixed: true
 
 timeout: 10m
-
-format: json
-
-output: trivy-results.json
 
 ignorefile: .trivyignore
