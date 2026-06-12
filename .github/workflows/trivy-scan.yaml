@@ -39,16 +39,9 @@ jobs:
         with:
           version: v0.71.0
           scan-type: fs
+          trivy-config: trivy.yaml
           format: json
           output: trivy-results.json
-          trivy-config: trivy.yaml
-          # scan-type: fs
-          # scanners: vuln,secret,misconfig,license
-          # severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-          # ignore-unfixed: true
-          # timeout: 10m
-          # format: json
-          # output: trivy-results.json
 
 
       - name: Extract Trivy summary
