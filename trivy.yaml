@@ -16,7 +16,3 @@ ignore-unfixed: true
 timeout: 10m
 
 ignorefile: .trivyignore
-
-format: json
-
-output: trivy-results.json
