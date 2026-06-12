@@ -179,7 +179,7 @@ jobs:
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.medium }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.low }}" -gt 0 ]; then
-            echo "Failing due to vulnerabilities"
+            echo "Failing due to vulnerabilities/misconfig/secrets"
             exit 1
           fi
 
