@@ -5,11 +5,11 @@ on:
   push:
     branches: [ master ]
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "45 7 * * 4"
 
 permissions:
   contents: read
-  security-events: write
+  pull-requests: write
 
 env:
   TRIVY_CACHE_DIR: /tmp/trivy-cache
@@ -21,32 +21,177 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+        
       - name: Cache Trivy DB
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.TRIVY_CACHE_DIR }}
-          key: trivy-db-${{ runner.os }}
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             trivy-db-${{ runner.os }}-
 
       - name: Run Trivy Scan (Vuln, Secret, Misconfig, License)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          scan-type: fs
-          scanners: vuln,secret,misconfig,license
-          scan-ref: .
+          version: v0.71.0
           trivy-config: trivy.yaml
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: 1
+          # scan-type: fs
+          # scanners: vuln,secret,misconfig,license
+          # severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          # ignore-unfixed: true
+          # timeout: 10m
+          # format: json
+          # output: trivy-results.json
 
-      - name: Upload Trivy SARIF to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Extract Trivy summary
+        id: summary
+        run: |
+            DATA='[
+              .Results[].Vulnerabilities[]?,
+              .Results[].Misconfigurations[]?,
+              .Results[].Secrets[]?
+            ]'
+
+            CRITICAL=$(jq "$DATA | map(select(.Severity==\"CRITICAL\")) | length" trivy-results.json)
+            HIGH=$(jq "$DATA | map(select(.Severity==\"HIGH\")) | length" trivy-results.json)            
+            LOW=$(jq "$DATA | map(select(.Severity==\"LOW\")) | length" trivy-results.json)
+            MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
+            UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
+
+            TOP_ISSUES=$(jq -r "$DATA
+            | map(
+              \"### 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\n\" +
+              \"**Title:** \(.Title // .Message // \"N/A\")\n\" +
+              \"**Package:** \(.PkgName // \"N/A\") | **Installed:** \(.InstalledVersion // \"N/A\") | **Fixed:** \(.FixedVersion // \"N/A\")\n\" +
+              \"**Link:** \(.PrimaryURL // \"N/A\")\"
+            )
+            | join(\"\n\n---\n\n\")
+            " trivy-results.json)
+
+            # LICENSES=$(jq -r '
+            # .Results[].Packages[]?
+            # | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
+            # ' trivy-results.json)
+
+            ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
+            
+            # DISALLOWED_LIST=$(jq -r "
+            # .Results[].Packages[]?
+            # | select(.Licenses != null)
+            # | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
+            # | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
+            # " trivy-results.json)
+
+            DISALLOWED_LIST=$(jq -r '
+              .Results[].Packages[]?
+              | select(.Licenses != null)
+              | select((.Licenses | join(",")) | test("'"$ALLOWED_LICENSES"'") | not)
+              | "❌ **Package:** \(.Name)\n" +
+                "   - License: \(.Licenses | join(","))\n" +
+                "   - Version: \(.Version // "N/A")\n" +
+                "   - Reason: Not in allowed license list\n" +
+                "   - Action: Replace or get approval\n"
+            ' trivy-results.json)
+
+
+            DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "❌" || true)
+            echo "disallowed_count=$DISALLOWED_COUNT" >> $GITHUB_OUTPUT
+            
+            echo "disallowed<<EOF" >> $GITHUB_OUTPUT
+            #echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
+            echo "$DISALLOWED_LIST" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            # echo "licenses<<EOF" >> $GITHUB_OUTPUT
+            # echo "$LICENSES" >> $GITHUB_OUTPUT
+            # echo "EOF" >> $GITHUB_OUTPUT
+
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+            echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "high=$HIGH" >> $GITHUB_OUTPUT
+            echo "low=$LOW" >> $GITHUB_OUTPUT
+            echo "medium=$MEDIUM" >> $GITHUB_OUTPUT
+            echo "unknown=$UNKNOWN" >> $GITHUB_OUTPUT
+            echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
+
+            echo "issues<<EOF" >> $GITHUB_OUTPUT
+            #echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
+            echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with Trivy
+        uses: actions/github-script@v9
         with:
-          sarif_file: trivy-results.sarif
-          category: trivy-iac
+            script: |  
+              const body = `
+              ### 🔒 Trivy Security Scan Result
+
+              **Critical:** ${{ steps.summary.outputs.critical }}  
+              **High:** ${{ steps.summary.outputs.high }}  
+              **Medium:** ${{ steps.summary.outputs.medium }}  
+              **Low:** ${{ steps.summary.outputs.low }}  
+              **Unknown:** ${{ steps.summary.outputs.unknown }}
+
+              ---
+              ### 🚫 Non-compliant Licenses (${{ steps.summary.outputs.disallowed_count }})
+              ${{ steps.summary.outputs.disallowed_count == '0' && '✅ All licenses are compliant' || steps.summary.outputs.disallowed }}
+
+              ---
+              🔗 Full report: ${{ steps.summary.outputs.run_url }}
+              ---
+              ${{ steps.summary.outputs.issues }}
+              `;
+
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-report
+          path: trivy-results.json
+
+      - name: Enforce license policy
+        run: |
+          ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
+
+          DISALLOWED=$(jq -r "
+            [
+              .Results[].Packages[]?
+               | select(.Licenses != null)
+              | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
+            ]
+            | length
+            " trivy-results.json)
+
+          echo "Disallowed count: $DISALLOWED"
+
+          if [ "$DISALLOWED" -gt 0 ]; then
+            echo "❌ Found disallowed licenses (not in allowed list)"
+            exit 1
+          fi
+
+
+      - name: Fail if vulnerabilities found
+        run: |
+          # LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
+          # if [ "$LICENSE_COUNT" -gt 0 ]; then
+          #   echo "License compliance issues found"
+          #   exit 1
+          # fi
+
+          if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.medium }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.low }}" -gt 0 ]; then
+            echo "Failing due to vulnerabilities/misconfig/secrets"
+            exit 1
+          fi
