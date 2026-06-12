@@ -1,8 +1,9 @@
-scanners:
-  - vuln
-  - secret
-  - misconfig
-  - license
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+    - license
 
 severity:
   - LOW
