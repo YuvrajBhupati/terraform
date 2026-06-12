@@ -13,6 +13,7 @@ permissions:
 
 env:
   TRIVY_CACHE_DIR: /tmp/trivy-cache
+  ALLOWED_LICENSES: "MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
 
 jobs:
   trivy-scan:
@@ -76,8 +77,7 @@ jobs:
             # | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
             # ' trivy-results.json)
 
-            # ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
-            ALLOWED_LICENSES="MIT"
+            
             
             # DISALLOWED_LIST=$(jq -r "
             # .Results[].Packages[]?
@@ -161,9 +161,6 @@ jobs:
 
       - name: Enforce license policy
         run: |
-          # ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
-          ALLOWED_LICENSES="MIT"
-
           DISALLOWED=$(jq -r "
             [
               .Results[].Packages[]?
