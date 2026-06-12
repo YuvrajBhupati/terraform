@@ -51,6 +51,11 @@ jobs:
           # format: json
           # output: trivy-results.json
 
+      - name: Verify config
+        run: |
+          echo "===== trivy.yaml ====="
+          cat trivy.yaml
+
       - name: Debug Trivy report
         run: |
           echo "===== FILE EXISTS ====="
