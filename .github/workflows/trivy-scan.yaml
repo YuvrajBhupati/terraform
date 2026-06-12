@@ -25,9 +25,9 @@ jobs:
 
       - name: Install Node dependencies
         run: |
-          if [ -f "package.json" ]; then
-             echo "Installing dependencies for frontend repo"
-             yarn install --frozen-lockfile
+          if [ -f "yarn.lock" ]; then
+            echo "Yarn project detected → installing dependencies"
+            yarn install --frozen-lockfile
           fi
 
       - name: Install jq
