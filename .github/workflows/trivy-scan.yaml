@@ -26,8 +26,10 @@ jobs:
       - name: Install Node dependencies
         run: |
           if [ -f "yarn.lock" ]; then
-            echo "Node project detected → installing dependencies"
-            yarn install --frozen-lockfile
+            echo "Yarn project detected → enabling corepack"
+            corepack enable
+            corepack prepare yarn@stable --activate
+            yarn install --immutable
           fi
 
       - name: Install jq
