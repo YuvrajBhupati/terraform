@@ -47,6 +47,7 @@ jobs:
       - name: Extract Trivy summary
         id: summary
         run: |
+            chmod +x scripts/extract-trivy-summary.sh
             ./scripts/extract-trivy-summary.sh trivy-results.json
             
       - name: Comment PR with Trivy
