@@ -26,9 +26,21 @@ TOP_ISSUES=$(jq -r '
 | map(
     "### 🔒 " + (.Severity // "N/A") + " - " +
     (.ID // .VulnerabilityID // "N/A") + "\n" +
-    "**Title:** " + (.Title // .Message // "N/A") + "\n" +
-    "**Package:** " + (.PkgName // "N/A") + "\n" +
-    "**Link:** " + (.PrimaryURL // "N/A")
+
+    "**Title:** " +
+    (.Title // .Message // "N/A") + "\n" +
+
+    "**Package:** " +
+    (.PkgName // "N/A") +
+
+    " | **Installed:** " +
+    (.InstalledVersion // "N/A") +
+
+    " | **Fixed:** " +
+    (.FixedVersion // "N/A") + "\n" +
+
+    "**Link:** " +
+    (.PrimaryURL // "N/A")
 )
 | join("\n\n---\n\n")
 ' "$TRIVY_FILE")
