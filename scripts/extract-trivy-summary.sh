@@ -62,6 +62,33 @@ DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "❌" || true)
 
 RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
 
+COMMENT_BODY=$(cat <<EOF
+### 🔒 Trivy Security Scan Result
+
+**Critical:** $CRITICAL
+**High:** $HIGH
+**Medium:** $MEDIUM
+**Low:** $LOW
+**Unknown:** $UNKNOWN
+
+---
+### 🚫 Non-compliant Licenses ($DISALLOWED_COUNT)
+
+$(if [ "$DISALLOWED_COUNT" -eq 0 ]; then
+    echo "✅ All licenses are compliant"
+  else
+    echo "$DISALLOWED_LIST"
+  fi)
+
+---
+🔗 Full report: $RUN_URL
+
+---
+
+$TOP_ISSUES
+EOF
+)
+
 {
   echo "critical=$CRITICAL"
   echo "high=$HIGH"
@@ -78,4 +105,9 @@ RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/
   echo "disallowed<<EOF"
   echo "$DISALLOWED_LIST"
   echo "EOF"
+
+  echo "comment_body<<EOF"
+  echo "$COMMENT_BODY"
+  echo "EOF"
+
 } >> "$OUTPUT_FILE"
