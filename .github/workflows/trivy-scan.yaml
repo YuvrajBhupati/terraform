@@ -23,6 +23,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Install Node dependencies
+        run: |
+          if [ -f "package.json" ]; then
+             echo "Installing dependencies for frontend repo"
+             yarn install --frozen-lockfile
+          fi
+
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
