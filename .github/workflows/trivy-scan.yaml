@@ -52,31 +52,12 @@ jobs:
       - name: Comment PR with Trivy
         uses: actions/github-script@v9
         with:
-            script: |  
-              const body = `
-              ### 🔒 Trivy Security Scan Result
-
-              **Critical:** ${{ steps.summary.outputs.critical }}  
-              **High:** ${{ steps.summary.outputs.high }}  
-              **Medium:** ${{ steps.summary.outputs.medium }}  
-              **Low:** ${{ steps.summary.outputs.low }}  
-              **Unknown:** ${{ steps.summary.outputs.unknown }}
-
-              ---
-              ### 🚫 Non-compliant Licenses (${{ steps.summary.outputs.disallowed_count }})
-              ${{ steps.summary.outputs.disallowed_count == '0' && '✅ All licenses are compliant' || steps.summary.outputs.disallowed }}
-
-              ---
-              🔗 Full report: ${{ steps.summary.outputs.run_url }}
-              ---
-              ${{ steps.summary.outputs.issues }}
-              `;
-
-              await github.rest.issues.createComment({
-                ...context.repo,
-                issue_number: context.issue.number,
-                body: body
-              });
+         script: |
+          await github.rest.issues.createComment({
+            ...context.repo,
+            issue_number: context.issue.number,
+            body: `${{ steps.summary.outputs.comment_body }}`
+          });
 
 
       - name: Upload Trivy report
