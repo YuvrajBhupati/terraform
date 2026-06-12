@@ -62,4 +62,3 @@ bash scripts/check-license-policy.sh trivy-results.json
 ```bash
 cat /tmp/trivy-output
 ```
-``
