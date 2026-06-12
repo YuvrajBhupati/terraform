@@ -23,25 +23,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Install Node dependencies
-        run: |
-          if [ -f "yarn.lock" ]; then
-            echo "Yarn project detected → enabling corepack"
-            corepack enable
-            corepack prepare yarn@stable --activate
-            yarn install --immutable
-          fi
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Install Node dependencies
-        run: |
-          if [ -f "package.json" ]; then
-            echo "Node project detected → installing dependencies"
-            yarn install --frozen-lockfile
-          fi
-
+        
       - name: Cache Trivy DB
         uses: actions/cache@v5
         with:
