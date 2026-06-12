@@ -78,12 +78,24 @@ jobs:
 
             ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
             
+            # DISALLOWED_LIST=$(jq -r "
+            # .Results[].Packages[]?
+            # | select(.Licenses != null)
+            # | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
+            # | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
+            # " trivy-results.json)
+
             DISALLOWED_LIST=$(jq -r "
             .Results[].Packages[]?
             | select(.Licenses != null)
             | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
-            | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
+            | \"❌ **Package:** \(.Name)\n\" +
+            \"   - License: \(.Licenses | join(\",\"))\n\" +
+            \"   - Version: \(.Version // \\\"N/A\\\")\n\" +
+            \"   - Reason: Not in allowed license list\n\" +
+            \"   - Action: Replace or get approval\n\"
             " trivy-results.json)
+
 
             DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "❌" || true)
             echo "disallowed_count=$DISALLOWED_COUNT" >> $GITHUB_OUTPUT
