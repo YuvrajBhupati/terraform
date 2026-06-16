@@ -62,29 +62,42 @@ jobs:
             MEDIUM=$(jq "$DATA | map(select(.Severity==\"MEDIUM\")) | length" trivy-results.json)
             UNKNOWN=$(jq "$DATA | map(select(.Severity==\"UNKNOWN\")) | length" trivy-results.json)
 
-            TOP_ISSUES=$(jq -r "$DATA
+            TOP_ISSUES=$(jq -r '
+            [
+              .Results[] as $res
+              | [
+                  ($res.Vulnerabilities[]? + {File: $res.Target}),
+                  ($res.Misconfigurations[]? + {File: $res.Target}),
+                  ($res.Secrets[]? + {File: $res.Target})
+                ]
+            | .[]
+            ]
             | map(
-              \"### 🔒 \(.Severity // \"N/A\") - \(.ID // .VulnerabilityID // \"N/A\")\n\" +
-              \"**Title:** \(.Title // .Message // \"N/A\")\n\" +
-              \"**Package:** \(.PkgName // \"N/A\") | **Installed:** \(.InstalledVersion // \"N/A\") | **Fixed:** \(.FixedVersion // \"N/A\")\n\" +
-              \"**Link:** \(.PrimaryURL // \"N/A\")\"
-            )
-            | join(\"\n\n---\n\n\")
-            " trivy-results.json)
+              "### 🔒 " + (.Severity // "N/A") + " - " +
+              (.ID // .VulnerabilityID // "N/A") + "\n" +
 
-            # LICENSES=$(jq -r '
-            # .Results[].Packages[]?
-            # | "- **Package:** \(.Name) | **License:** \(.Licenses[0] // "N/A")"
-            # ' trivy-results.json)
+                "**Title:** " +
+              (.Title // .Message // "N/A") + "\n" +
+
+              "**File:** " + (.File // "N/A") + "\n" +
+
+              "**Package:** " +
+              (.PkgName // "N/A") +
+
+              " | **Installed:** " +
+              (.InstalledVersion // "N/A") +
+
+              " | **Fixed:** " +
+              (.FixedVersion // "N/A") + "\n" +
+
+              "**Link:** " +
+              (.PrimaryURL // "N/A")
+            )
+            | join("\n\n---\n\n")
+            ' "$TRIVY_FILE")
 
             ALLOWED_LICENSES="MIT|Apache-2.0|BSD-2-Clause|BSD-3-Clause|ISC"
             
-            # DISALLOWED_LIST=$(jq -r "
-            # .Results[].Packages[]?
-            # | select(.Licenses != null)
-            # | select((.Licenses | join(\",\")) | test(\"$ALLOWED_LICENSES\") | not)
-            # | \"❌ \(.Name) | \(.Licenses | join(\",\"))\"
-            # " trivy-results.json)
 
             DISALLOWED_LIST=$(jq -r '
               .Results[].Packages[]?
@@ -102,12 +115,8 @@ jobs:
             echo "disallowed_count=$DISALLOWED_COUNT" >> $GITHUB_OUTPUT
             
             echo "disallowed<<EOF" >> $GITHUB_OUTPUT
-            #echo "$DISALLOWED_LIST" | sed '/^$/d' >> $GITHUB_OUTPUT
             echo "$DISALLOWED_LIST" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-            # echo "licenses<<EOF" >> $GITHUB_OUTPUT
-            # echo "$LICENSES" >> $GITHUB_OUTPUT
-            # echo "EOF" >> $GITHUB_OUTPUT
 
             RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -119,7 +128,6 @@ jobs:
             echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
 
             echo "issues<<EOF" >> $GITHUB_OUTPUT
-            #echo "$TOP_ISSUES" | sed 's/^[ \t]*//' >> $GITHUB_OUTPUT
             echo "$TOP_ISSUES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
@@ -182,12 +190,6 @@ jobs:
 
       - name: Fail if vulnerabilities found
         run: |
-          # LICENSE_COUNT=$(jq '[.Results[].Licenses[]?] | length' trivy-results.json)
-          # if [ "$LICENSE_COUNT" -gt 0 ]; then
-          #   echo "License compliance issues found"
-          #   exit 1
-          # fi
-
           if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.medium }}" -gt 0 ] || \
