@@ -24,7 +24,7 @@ TOP_ISSUES=$(jq -r '
   .Results[].Secrets[]?
 ]
 | map(
-    "### 🔒 " + (.Severity // "N/A") + " - " +
+    "###  " + (.Severity // "N/A") + " - " +
     (.ID // .VulnerabilityID // "N/A") + "\n" +
 
     "**Title:** " +
@@ -51,14 +51,14 @@ DISALLOWED_LIST=$(jq -r '
   .Results[].Packages[]?
   | select(.Licenses != null)
   | select((.Licenses | join(",")) | test("'"$ALLOWED_LICENSES"'") | not)
-  | "❌ **Package:** \(.Name)\n" +
+  | "**Package:** \(.Name)\n" +
     "   - License: \(.Licenses | join(","))\n" +
     "   - Version: \(.Version // "N/A")\n" +
     "   - Reason: Not in allowed license list\n" +
     "   - Action: Replace or get approval\n"
 ' "$TRIVY_FILE")
 
-DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "❌" || true)
+DISALLOWED_COUNT=$(echo "$DISALLOWED_LIST" | grep -c "Package:" || true)
 
 RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
 
@@ -72,10 +72,10 @@ COMMENT_BODY=$(cat <<EOF
 **Unknown:** $UNKNOWN
 
 ---
-### 🚫 Non-compliant Licenses ($DISALLOWED_COUNT)
+### Non-compliant Licenses ($DISALLOWED_COUNT)
 
 $(if [ "$DISALLOWED_COUNT" -eq 0 ]; then
-    echo "✅ All licenses are compliant"
+    echo " All licenses are compliant"
   else
     echo "$DISALLOWED_LIST"
   fi)
