@@ -25,14 +25,6 @@ jobs:
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-        
-      - name: Cache Trivy DB
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.TRIVY_CACHE_DIR }}
-          key: trivy-db-${{ runner.os }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            trivy-db-${{ runner.os }}-
 
       - name: Run Trivy Scan (Vuln, Secret, Misconfig, License)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -73,6 +65,7 @@ jobs:
             ./scripts/check-license-policy.sh trivy-results.json
 
       - name: Check for vulnerabilities
+        if: always()
         run: |
           if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
              [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
