@@ -26,4 +26,8 @@ if [ "$DISALLOWED" -gt 0 ]; then
   exit 1
 fi
 
+echo "Testing always() behavior"
+exit 1
+
+
 echo "✅ All licenses are compliant"
