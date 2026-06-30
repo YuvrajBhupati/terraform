@@ -40,23 +40,23 @@ jobs:
             chmod +x scripts/extract-trivy-summary.sh
             ./scripts/extract-trivy-summary.sh trivy-results.json
             
-      - name: Comment PR with Trivy
-        uses: actions/github-script@v9
-        env:
-          COMMENT_BODY: ${{ steps.summary.outputs.comment_body }}
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.issue.number,
-              body: process.env.COMMENT_BODY
-            });
-
-      # - name: Upload Trivy report
-      #   uses: actions/upload-artifact@v7
+      # - name: Comment PR with Trivy
+      #   uses: actions/github-script@v9
+      #   env:
+      #     COMMENT_BODY: ${{ steps.summary.outputs.comment_body }}
       #   with:
-      #     name: trivy-report
-      #     path: trivy-results.json
+      #     script: |
+      #       await github.rest.issues.createComment({
+      #         ...context.repo,
+      #         issue_number: context.issue.number,
+      #         body: process.env.COMMENT_BODY
+      #       });
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-report
+          path: trivy-results.json
 
       - name: Publish Trivy summary
         if: always()
