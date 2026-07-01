@@ -1,0 +1,20 @@
+name: Print Environment Variables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  print-bucket:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [dev, prod]
+
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - name: Print bucket
+        run: |
+          echo "Environment: ${{ matrix.environment }}"
+          echo "Bucket: ${{ vars.BUCKET }}"
