@@ -1,0 +1,18 @@
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+    - license
+
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+ignore-unfixed: true
+
+timeout: 10m
+
+ignorefile: .trivyignore

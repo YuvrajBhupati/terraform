@@ -4,12 +4,11 @@ on:
   pull_request:
   push:
     branches: [ master ]
-  # schedule:
-  #   - cron: "0 6 * * 1"
+  schedule:
+    - cron: "45 7 * * 4"
 
 permissions:
   contents: read
-  security-events: write
 
 env:
   TRIVY_CACHE_DIR: /tmp/trivy-cache
@@ -21,32 +20,65 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v6
 
-      - name: Cache Trivy DB
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.TRIVY_CACHE_DIR }}
-          key: trivy-db-${{ runner.os }}
-          restore-keys: |
-            trivy-db-${{ runner.os }}-
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Run Trivy Scan (Vuln, Secret, Misconfig, License)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
+          version: v0.71.0
           scan-type: fs
-          scanners: vuln,secret,misconfig,license
-          scan-ref: .
           trivy-config: trivy.yaml
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: 1
+          format: json
+          output: trivy-results.json
+    
+      - name: Extract Trivy summary
+        id: summary
+        run: |
+            chmod +x scripts/extract-trivy-summary.sh
+            ./scripts/extract-trivy-summary.sh trivy-results.json
+            
+      # - name: Comment PR with Trivy
+      #   uses: actions/github-script@v9
+      #   env:
+      #     COMMENT_BODY: ${{ steps.summary.outputs.comment_body }}
+      #   with:
+      #     script: |
+      #       await github.rest.issues.createComment({
+      #         ...context.repo,
+      #         issue_number: context.issue.number,
+      #         body: process.env.COMMENT_BODY
+      #       });
 
-      - name: Upload Trivy SARIF to GitHub Security
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v7
         with:
-          sarif_file: trivy-results.sarif
-          category: trivy-iac
+          name: trivy-report
+          path: trivy-results.json
+
+      - name: Publish Trivy summary
+        if: always()
+        run: |
+          {
+            echo "# Trivy Security Scan Summary"
+            echo
+            echo "${{ steps.summary.outputs.comment_body }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check license compliance
+        run: |
+            chmod +x scripts/check-license-policy.sh
+            ./scripts/check-license-policy.sh trivy-results.json
+
+      - name: Check for vulnerabilities
+        if: always()
+        run: |
+          if [ "${{ steps.summary.outputs.critical }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.high }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.medium }}" -gt 0 ] || \
+             [ "${{ steps.summary.outputs.low }}" -gt 0 ]; then
+            echo "Failing due to vulnerabilities/misconfig/secrets"
+            exit 1
+          fi
